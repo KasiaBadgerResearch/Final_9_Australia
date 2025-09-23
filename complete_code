@@ -1,0 +1,51 @@
+# How has the balance between Australia’s merchandise imports from high-income economies and from low- and middle-income economies in East Asia & Pacific evolved between 1960 and 2020?
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# Folders
+data_raw_folder = "data_raw/"
+data_clean_folder = "data_clean/"
+figures_folder = "figures/"
+
+# Load CSV
+filename = "private-sector_aus_filtered.csv"  # Filtered dataset with only relevant rows
+df = pd.read_csv(os.path.join(data_raw_folder, filename))
+
+# Keep only needed columns
+df = df[["Year", "Indicator Name", "Value"]]
+
+# Convert Year and Value to numeric, drop invalid rows
+df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
+df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+df = df.dropna(subset=["Year", "Value"])
+
+# Pivot indicators into separate columns
+df_pivot = df.pivot(index="Year", columns="Indicator Name", values="Value").reset_index()
+df_pivot = df_pivot.sort_values("Year")
+
+print("Pivoted Argentina dataset:")
+display(df_pivot)
+
+# Interpolate missing values for smooth plotting (optional)
+df_plot = df_pivot.interpolate(method='linear')
+
+# Plot the two indicators
+plt.figure(figsize=(10,6))
+plt.plot(df_plot["Year"], df_plot["Merchandise imports from high-income economies (% of total merchandise imports)"], 
+         marker='o', linestyle='-', label="Merchandise imports from high-income economies (% of total merchandise imports)")
+plt.plot(df_plot["Year"], df_plot["Merchandise imports from low- and middle-income economies in East Asia & Pacific (% of total merchandise imports)"], 
+         marker='o', linestyle='-', label="Merchandise imports from low- and middle-income economies in East Asia & Pacific (% of total merchandise imports)")
+
+plt.title("Australia: Merchandise Imports from High-Income Economies vs Merchandise Imports from Low- & Middle-Income Economies within the Region (1960-2020)")
+plt.xlabel("Year")
+plt.ylabel("Percentage")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(os.path.join(figures_folder, "australia_high_income_economies_vs_low_and_middle_economies.png"))
+plt.show()
+
+# Save cleaned CSV
+df_pivot.to_csv(os.path.join(data_clean_folder, "australia_high_income_economies_vs_low_and_middle_economies"), index=False)
